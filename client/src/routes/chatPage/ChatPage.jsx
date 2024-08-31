@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import "./chatPage.css";
+import NewPrompt from "../../components/newPrompt/NewPrompt";
 
 const ChatPage = () => {
   const endRef = useRef(null);
@@ -28,6 +29,8 @@ const ChatPage = () => {
           <div className="message">Demo Message from AI</div>
           <div className="message user">Message from User</div>
           <div className="message">Demo Message from AI</div>
+
+          <NewPrompt />
           <div ref={endRef} />
         </div>
       </div>
