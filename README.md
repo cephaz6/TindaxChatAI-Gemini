@@ -35,6 +35,8 @@ with pure CSS styling and integrates Clerk for seamless user authentication.
   solution integrated for managing user sessions.
 - **Pure CSS**: Custom styling with no reliance on third-party CSS frameworks,
   giving you full control over the design.
+- **[ImageKit](https://imagekit.io/)**: ImageKit allows us to deliver optimized
+  images across web and mobile with minimal effort
 
 ## Installation
 
