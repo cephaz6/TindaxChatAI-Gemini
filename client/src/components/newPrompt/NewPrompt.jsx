@@ -15,6 +15,23 @@ const NewPrompt = () => {
     dbData: {},
     aiData: {},
   });
+
+  const chat = model.startChat({
+    history: [
+      {
+        role: "user",
+        parts: [{ text: "Hello, I have 2 dogs in my house" }],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Great to meet you. What would you like to know" }],
+      },
+    ],
+    generationConfig: {
+      // maxOutputTokens: 100
+    },
+  });
+
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -23,20 +40,29 @@ const NewPrompt = () => {
 
   const add = async (text) => {
     setQuestion(text);
-
-    const result = await model.generateContent(
+    const result = await chat.sendMessageStream(
       Object.entries(img.aiData).length ? [img.aiData, text] : [text]
     );
-    const response = await result.response;
-
-    setAnswer(response.text());
+    let accumulatedText = "";
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      console.log(chunkText);
+      accumulatedText += chunkText;
+      setAnswer(accumulatedText);
+    }
+    // const response = await result.response;
+    setImg({
+      isLoading: false,
+      error: "",
+      dbData: {},
+      aiData: {},
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const text = e.target.text.value;
     if (!text) return;
-
     add(text);
   };
   return (
