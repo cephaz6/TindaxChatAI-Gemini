@@ -9,7 +9,7 @@ const Homepage = () => {
     <div className="homepage">
       <img src="./orbital.png" alt="" className="orbital" />
       <div className="left">
-        <h1 className="heading-font">tindaxAI</h1>
+        <h1 className="heading-font">Lagos-AI</h1>
         <h2>Supercharge your creativity and productivity</h2>
         <h3>
           Chat to start writing, planning, learning and more with Tindax AI
