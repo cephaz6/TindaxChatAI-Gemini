@@ -4,6 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import Chat from "./models/chat.js";
 import UserChats from "./models/userChats.js";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -11,6 +12,7 @@ const app = express();
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
+    credentials: true,
   })
 );
 
@@ -38,8 +40,15 @@ app.get("/api/upload", (req, res) => {
   res.send(result);
 });
 
-app.post("/api/chats", async (req, res) => {
-  const { userId, text } = req.body;
+// app.get("/api/test", ClerkExpressRequireAuth(), (req, res) => {
+//   console.log(userId);
+//   res.send("Success");
+// });
+
+app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
+  const { text } = req.body;
+
   try {
     // CREATE A NEW CHAT
     const newChat = new Chat({
@@ -47,12 +56,12 @@ app.post("/api/chats", async (req, res) => {
       history: [{ role: "user", parts: [{ text }] }],
     });
 
-    const savedChat = newChat.save();
+    const savedChat = await newChat.save();
 
-    // check if user chat exists
+    // CHECK IF THE USERCHATS EXISTS
     const userChats = await UserChats.find({ userId: userId });
 
-    // Create a new chat if chat doesnt exist in the chats array
+    // IF DOESN'T EXIST CREATE A NEW ONE AND ADD THE CHAT IN THE CHATS ARRAY
     if (!userChats.length) {
       const newUserChats = new UserChats({
         userId: userId,
@@ -63,9 +72,10 @@ app.post("/api/chats", async (req, res) => {
           },
         ],
       });
+
       await newUserChats.save();
     } else {
-      // IF EXISTS, PUSH CHAT TO THE EXISTING ARRAY
+      // IF EXISTS, PUSH THE CHAT TO THE EXISTING ARRAY
       await UserChats.updateOne(
         { userId: userId },
         {
@@ -77,12 +87,31 @@ app.post("/api/chats", async (req, res) => {
           },
         }
       );
+
       res.status(201).send(newChat._id);
     }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error creating chat!");
+  }
+});
+
+// Fetching Users Chat
+app.get("/api/userchats", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
+  try {
+    const userChats = UserChats.find({ userId });
+    res.status(200).send(userChats[0].chats);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Error creating new chat!");
+    res.status(500).send("Error fetching userchats!");
   }
+});
+
+// Clerk Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(401).send("Unauthenticated!");
 });
 
 // Server PORT
