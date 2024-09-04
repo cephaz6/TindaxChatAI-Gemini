@@ -2,6 +2,8 @@ import express from "express";
 import ImageKit from "imagekit";
 import cors from "cors";
 import mongoose from "mongoose";
+import Chat from "./models/chat.js";
+import UserChats from "./models/userChats.js";
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -11,6 +13,8 @@ app.use(
     origin: process.env.CLIENT_URL,
   })
 );
+
+app.use(express.json());
 
 // MONGO DB Connection
 const connect = async () => {
@@ -32,6 +36,53 @@ const imagekit = new ImageKit({
 app.get("/api/upload", (req, res) => {
   const result = imagekit.getAuthenticationParameters();
   res.send(result);
+});
+
+app.post("/api/chats", async (req, res) => {
+  const { userId, text } = req.body;
+  try {
+    // CREATE A NEW CHAT
+    const newChat = new Chat({
+      userId: userId,
+      history: [{ role: "user", parts: [{ text }] }],
+    });
+
+    const savedChat = newChat.save();
+
+    // check if user chat exists
+    const userChats = await UserChats.find({ userId: userId });
+
+    // Create a new chat if chat doesnt exist in the chats array
+    if (!userChats.length) {
+      const newUserChats = new UserChats({
+        userId: userId,
+        chats: [
+          {
+            _id: savedChat._id,
+            title: text.substring(0, 40),
+          },
+        ],
+      });
+      await newUserChats.save();
+    } else {
+      // IF EXISTS, PUSH CHAT TO THE EXISTING ARRAY
+      await UserChats.updateOne(
+        { userId: userId },
+        {
+          $push: {
+            chats: {
+              _id: savedChat._id,
+              title: text.substring(0, 40),
+            },
+          },
+        }
+      );
+      res.status(201).send(newChat._id);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error creating new chat!");
+  }
 });
 
 // Server PORT
