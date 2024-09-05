@@ -15,6 +15,7 @@ const Homepage = () => {
           Chat to start writing, planning, learning and more with Tindax AI
         </h3>
         <Link to="/dashboard">Chat with Tindax</Link>
+        {/* <button onClick={test}>Test Backend Auth</button> */}
       </div>
       <div className="right">
         <div className="imgContainer">
